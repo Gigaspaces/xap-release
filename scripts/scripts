@@ -1,0 +1,8 @@
+  /home/barakbo/dev/github/xap-release/scripts:
+  total used in directory 32 available 132611520
+  drwxrwxr-x 2 barakbo barakbo 4096 Jun 16 22:00 .
+  drwxrwxr-x 4 barakbo barakbo 4096 Jun 16 21:54 ..
+  -rw-rw-r-- 1 barakbo barakbo   56 Jun 16 21:57 clone.sh
+  -rwxrwxr-x 1 barakbo barakbo  238 Jun 16 21:54 clean-m2.sh
+  -rw-rw-r-- 1 barakbo barakbo  122 Jun 16 22:00 setenv.sh
+  -rwxrwxr-x 1 barakbo barakbo  338 Jun 16 21:54 update-version.sh
