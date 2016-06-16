@@ -1,55 +1,125 @@
 #!/bin/bash
 source setenv.sh
-#export WORKSPACE=/home/barakbo/tmp/workspace
-#export BRANCH=xap-renaming-m3
-#export VERSION=12.0.0-m6
-#export BUILD_NUMBER=1
-#export M2=/home/barakbo/tmp/m2
-#export SCRIPTS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Get the folder by git url
+# $1 is a git url of the form git@github.com:Gigaspaces/xap-open.git
+# The function will return a folder in the $WORKSPACE that match this git url (for example $WORKSPACE/xap-open)
 function get_folder {
-    echo -n "${WORKSPACE}/$(echo -e $1 | sed 's/.*\/\(.*\)\.git/\1/')"
+    echo -n "$WORKSPACE/$(echo -e $1 | sed 's/.*\/\(.*\)\.git/\1/')"
 }
 
-function clean_branch {
+# Try to checkout the branch $BRANCH in the git folder $1
+# Discard all local commits and local modifications, calling this function will loose all local commits and local changes.
+# It will remove any untracked file as well.
+# It return nonezero status in case of error, to signal that new clone is needed.
+function checkout_branch {
     local folder="$1"
-    local branch="$2"
-    echo "clean branch ${branch} in workspace ${folder}"
     (
-      cd "${folder}"
+      cd "$folder"
       git reset --hard HEAD
       git checkout -- .
       git clean -d -f -q -x .
       git gc --auto
-      git checkout "${branch}"
+      git checkout "$BRANCH"
       return "$?"
     ) 
 }
 
+# Try to checkout branch $BRANCH in git folder $1.
+# In case of failuer delete folder $1 and use fresh clone to create this folder.
 function clone {
     local url="$1"
-    local branch="$2"
     local folder="$(get_folder $1)"
   
-    if [ -d "${folder}" ]
+    if [ -d "$folder" ]
     then
-        clean_branch "${folder}" "${branch}"
+        checkout_branch "$folder" "$branch"
         if [ $? -eq 0 ]
         then
     	    return 0;
         fi
     fi
-    rm -rf "${folder}"
-    git clone "${url}" "${folder}" 
-    clean_branch "${folder}" "${branch}"
+    rm -rf "$folder"
+    git clone "$url" "$folder" 
+    checkout_branch "$folder"
 }
 
-function release_xap{
+# Rename all version of each pom in $1 folder with $VERSION
+function rename_poms {
+    local version="$(grep -m1 '<version>' $1/pom.xml | sed 's/<version>\(.*\)<\/version>/\1/')"
+    local trimmed_version="$(echo -e "${version}" | tr -d '[[:space:]]')"
+    find "$1" -name "pom.xml" -exec sed -i.bak "s/$trimmed_version/$VERSION/" \{\} \;
+}
+
+
+function create_temp_branch {
+    local branch_name="$1"
+    local git_folder="$2"
+    (
+     cd "$git_folder"
+     git branch -D   "$branch_name"
+     git checkout -b "$branch_name"
+    )
+}
+
+function clean_m2 {
+    rm -rf $M2/repository/org/xap      
+    rm -rf $M2/repository/org/gigaspaces 
+    rm -rf $M2/repository/com/gigaspaces 
+    rm -rf $M2/repository/org/openspaces 
+    rm -rf $M2/repository/com/gs         
+}
+
+
+function mvn_install {
+    (
+       cd "$1"
+       mvn -Dmaven.repo.local=$M2/repository install 
+       popd
+       if [ $? -neq 0 ]
+       then
+          exit 1;
+       fi
+    )
+}
+
+# Clone xap-open and xap.
+# Clean m2 from xap related directories.
+# Create temporary local git branch.
+# Rename poms.
+# Call maven install.
+# Commit changes.
+# Create tag.
+# Delete the temporary local branch.
+# Push the tag ? is it possible ?
+# Call maven deploy.
+function release_xap {
+
+    local xap_open_url="git@github.com:Gigaspaces/xap-open.git"
+    local xap_url="git@github.com:Gigaspaces/xap.git"
+    local temp_branch_name="$BRANCH-$VERSION"    
+    local xap_open_folder="$(get_folder $xap_open_url)"
+    local xap_folder="$(get_folder $xap_url)"
+
+    clone "$xap_open_url" 
+    clone "$xap_url"
+   
+    clean_m2 
+
+    create_temp_branch "$temp_branch_name" "$xap_open_folder"
+    create_temp_branch "$temp_branch_name" "$xap_folder"
+
+    rename_poms "$xap_open_folder"
+    rename_poms "$xap_folder"
+
+    
+    mvn_install "$xap_open_folder"
+    mvn_install "$xap_folder"
+    
 
 }
 
-clone "git@github.com:Gigaspaces/xap-open.git" "${BRANCH}" 
-clone "git@github.com:Gigaspaces/xap.git" "${BRANCH}" 
+release_xap 
 
 
 
