@@ -1,6 +1,7 @@
 #!/bin/bash
 source setenv.sh
 
+
 # Get the folder by git url
 # $1 is a git url of the form git@github.com:Gigaspaces/xap-open.git
 # The function will return a folder in the $WORKSPACE that match this git url (for example $WORKSPACE/xap-open)
@@ -73,14 +74,27 @@ function clean_m2 {
 
 function mvn_install {
     (
-       cd "$1"
-       mvn -Dmaven.repo.local=$M2/repository install 
+       pushd "$1"
+       cmd="mvn -Dmaven.repo.local=$M2/repository -DskipTests install"
+       eval "$cmd"
+       local r="$?"
        popd
-       if [ $? -neq 0 ]
+       if [ "$r" -ne 0 ]
        then
-          exit 1;
+          echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
+          exit "$r"
        fi
     )
+}
+
+function commit_changes {
+    local folder="$1"
+    local msg="Modify poms to $VERSION in temp branch that was built on top of $BRANCH"
+    echo "commiting changes in folder: $folder, with message: $msg"
+    git add -u
+    git commit -m "$msg"
+    git tag -d "$TAG_NAME"
+    git tag -a "$TAG_NAME" -m "$msg"
 }
 
 # Clone xap-open and xap.
@@ -100,22 +114,25 @@ function release_xap {
     local temp_branch_name="$BRANCH-$VERSION"    
     local xap_open_folder="$(get_folder $xap_open_url)"
     local xap_folder="$(get_folder $xap_url)"
+    echo "xap_folder is $xap_folder"
 
-    clone "$xap_open_url" 
-    clone "$xap_url"
+#    clone "$xap_open_url" 
+#    clone "$xap_url"
    
-    clean_m2 
+#    clean_m2 
 
-    create_temp_branch "$temp_branch_name" "$xap_open_folder"
-    create_temp_branch "$temp_branch_name" "$xap_folder"
+#    create_temp_branch "$temp_branch_name" "$xap_open_folder"
+#    create_temp_branch "$temp_branch_name" "$xap_folder"
 
-    rename_poms "$xap_open_folder"
+#    rename_poms "$xap_open_folder"
     rename_poms "$xap_folder"
 
     
-    mvn_install "$xap_open_folder"
-    mvn_install "$xap_folder"
+#    mvn_install "$xap_open_folder"
+#    mvn_install "$xap_folder"
     
+    commit_changes "$xap_open_folder" 
+    commit_changes "$xap_folder"
 
 }
 
