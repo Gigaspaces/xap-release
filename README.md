@@ -28,7 +28,7 @@ export WORKSPACE=/home/barakbo/tmp/workspace      # The location on the disk tha
 
 ## Workflow description.
 
-1. Clone xap-open and xap, this is done smartly to save time, indeed git *is* the information manager from hell
+1. Clone xap-open and xap, this is done smartly to save time, indeed git **is** the information manager from hell
 2. Clean m2 from xap related directories.
 3. Create temporary local git branch.
 4. Rename poms.
