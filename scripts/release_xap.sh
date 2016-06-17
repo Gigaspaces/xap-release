@@ -58,6 +58,7 @@ function create_temp_branch {
     local git_folder="$2"
     (
      cd "$git_folder"
+     git checkout "$BRANCH"
      git branch -D   "$branch_name"
      git checkout -b "$branch_name"
     )
