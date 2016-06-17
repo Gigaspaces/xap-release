@@ -39,5 +39,19 @@ export WORKSPACE=/home/barakbo/tmp/workspace      # The location on the disk tha
 9. Push the tag
 10. Call maven deploy.
 
+## How to run locally
 
+First you will need to upload your public SSH keys to github, in case you don't have SSH keys you can generate pair using
+
+```bash
+	ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+```
+
+Next copy to the ring the output of `cat ~/.ssh/id_rsa.pub` and paset it your github account as descrbe in
+https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
+
+This will enable you to work with github from your machine using the git native protocol without need to authenticate.
+
+Next clone this git repo, modify the `setenv.sh` file you can have the `M2` and `WORKSPACE` vars pointing each to an empty folder
+and run with `release_xap.sh setenv.sh`
 
