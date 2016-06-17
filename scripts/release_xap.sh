@@ -59,7 +59,7 @@ function create_temp_branch {
     (
      cd "$git_folder"
      git checkout "$BRANCH"
-     git branch -D   "$branch_name"
+     git branch -Dq  "$branch_name"
      git checkout -b "$branch_name"
     )
 }
