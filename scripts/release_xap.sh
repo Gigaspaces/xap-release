@@ -174,7 +174,12 @@ function release_xap {
 
     
     mvn_install "$xap_open_folder"
+    echo "Done installing xap open"
+    times
+
     mvn_install "$xap_folder"
+    echo "Done installing xap"
+    times
     
     commit_changes "$xap_open_folder" 
     commit_changes "$xap_folder"
