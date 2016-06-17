@@ -87,6 +87,7 @@ function mvn_install {
        if [ "$r" -ne 0 ]
        then
           echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
+          times
           exit "$r"
        fi
     )
@@ -102,6 +103,7 @@ function mvn_deploy {
        if [ "$r" -ne 0 ]
        then
           echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
+          times
           exit "$r"
        fi
     )
@@ -173,7 +175,7 @@ function release_xap {
 #    mvn_deploy "$xap_open_folder"
 #    mvn_deploy "$xap_folder"
 
-
+    times
 }
 
 release_xap 
