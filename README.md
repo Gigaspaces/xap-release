@@ -2,7 +2,7 @@
 
 The main script is `scripts/release_xap.sh`
 
-Configuration is in the file s`cripts/setenv.sh`
+Configuration is in the file `scripts/setenv.sh`
 
 First run is very slow because full git clone is done and maven m2 is empty.
 
