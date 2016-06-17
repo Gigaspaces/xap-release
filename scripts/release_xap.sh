@@ -52,7 +52,9 @@ function rename_poms {
     find "$1" -name "pom.xml" -exec sed -i.bak "s/$trimmed_version/$VERSION/" \{\} \;
 }
 
-
+# Create a temporary branch for the pom changes commits.
+# If such branch already exists delete it (is it wise ?)
+# Do not push this branch.
 function create_temp_branch {
     local temp_branch_name="$1"
     local git_folder="$2"
@@ -68,6 +70,7 @@ function create_temp_branch {
     )
 }
 
+
 function clean_m2 {
     rm -rf $M2/repository/org/xap      
     rm -rf $M2/repository/org/gigaspaces 
@@ -76,7 +79,8 @@ function clean_m2 {
     rm -rf $M2/repository/com/gs         
 }
 
-
+# Call maven install from directory $1
+# In case of none zero exit code exit code stop the release
 function mvn_install {
     (
        pushd "$1"
@@ -93,6 +97,9 @@ function mvn_install {
     )
 }
 
+# Call maven install from directory $1
+# It uses the target deploy:deploy to bypass the build.
+# In case of none zero exit code exit code stop the release
 function mvn_deploy {
     (
        pushd "$1"
@@ -109,6 +116,8 @@ function mvn_deploy {
     )
 }
 
+# Commit local changes and create a tag in dir $1.
+# It assume the branch is the local temp branch,
 function commit_changes {
     local folder="$1"
     local msg="Modify poms to $VERSION in temp branch that was built on top of $BRANCH"
@@ -120,10 +129,11 @@ function commit_changes {
     popd
 }
 
+# Delete the temp branch $2 in folder $1
+# Push the tag to origin
 function delete_temp_branch {
     local folder="$1"
     local temp_branch="$2"
-    echo "delete_temp_branch $temp_branch from folder $folder"
 
     pushd "$folder"
     git checkout -q "$TAG_NAME"
