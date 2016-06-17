@@ -53,5 +53,5 @@ https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
 This will enable you to work with github from your machine using the git native protocol without need to authenticate.
 
 Next clone this git repo, modify the `setenv.sh` file you can have the `M2` and `WORKSPACE` vars pointing each to an empty folder
-and run with `release_xap.sh setenv.sh`
+and run with `./release_xap.sh setenv.sh`
 
