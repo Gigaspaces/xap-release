@@ -120,10 +120,10 @@ function release_xap {
    
 #    clean_m2 
 
-#    create_temp_branch "$temp_branch_name" "$xap_open_folder"
-#    create_temp_branch "$temp_branch_name" "$xap_folder"
+    create_temp_branch "$temp_branch_name" "$xap_open_folder"
+    create_temp_branch "$temp_branch_name" "$xap_folder"
 
-#    rename_poms "$xap_open_folder"
+    rename_poms "$xap_open_folder"
     rename_poms "$xap_folder"
 
     
