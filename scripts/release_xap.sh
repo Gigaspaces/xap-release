@@ -1,5 +1,11 @@
 #!/bin/bash
-source setenv.sh
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 setenv.sh"
+    exit 1
+fi
+
+source "$1"
 
 
 # Get the folder by git url
