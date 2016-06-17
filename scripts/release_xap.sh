@@ -54,13 +54,17 @@ function rename_poms {
 
 
 function create_temp_branch {
-    local branch_name="$1"
+    local temp_branch_name="$1"
     local git_folder="$2"
     (
      cd "$git_folder"
      git checkout "$BRANCH"
-     git branch -Dq  "$branch_name"
-     git checkout -b "$branch_name"
+     git show-ref --verify --quiet "refs/heads/$temp_branch_name"
+     if [ "$?" -eq 0 ]
+     then
+	 git branch -D  "$temp_branch_name"
+     fi
+     git checkout -b "$temp_branch_name"
     )
 }
 
@@ -88,13 +92,42 @@ function mvn_install {
     )
 }
 
+function mvn_deploy {
+    (
+       pushd "$1"
+       cmd="mvn -Dmaven.repo.local=$M2/repository -DskipTests deploy:deploy"
+       eval "$cmd"
+       local r="$?"
+       popd
+       if [ "$r" -ne 0 ]
+       then
+          echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
+          exit "$r"
+       fi
+    )
+}
+
 function commit_changes {
     local folder="$1"
     local msg="Modify poms to $VERSION in temp branch that was built on top of $BRANCH"
-    echo "commiting changes in folder: $folder, with message: $msg"
+
+    pushd "$folder"
     git add -u
     git commit -m "$msg"
     git tag -f -a "$TAG_NAME" -m "$msg"
+    popd
+}
+
+function delete_temp_branch {
+    local folder="$1"
+    local temp_branch="$2"
+    echo "delete_temp_branch $temp_branch from folder $folder"
+
+    pushd "$folder"
+    git checkout -q "$TAG_NAME"
+    git branch -D "$temp_branch"
+    git push -f origin "$TAG_NAME"
+    popd
 }
 
 # Clone xap-open and xap.
@@ -105,7 +138,7 @@ function commit_changes {
 # Commit changes.
 # Create tag.
 # Delete the temporary local branch.
-# Push the tag ? is it possible ?
+# Push the tag
 # Call maven deploy.
 function release_xap {
 
@@ -116,10 +149,10 @@ function release_xap {
     local xap_folder="$(get_folder $xap_url)"
     echo "xap_folder is $xap_folder"
 
-#    clone "$xap_open_url" 
-#    clone "$xap_url"
+    clone "$xap_open_url" 
+    clone "$xap_url"
    
-#    clean_m2 
+    clean_m2 
 
     create_temp_branch "$temp_branch_name" "$xap_open_folder"
     create_temp_branch "$temp_branch_name" "$xap_folder"
@@ -128,11 +161,18 @@ function release_xap {
     rename_poms "$xap_folder"
 
     
-#    mvn_install "$xap_open_folder"
-#    mvn_install "$xap_folder"
+    mvn_install "$xap_open_folder"
+    mvn_install "$xap_folder"
     
     commit_changes "$xap_open_folder" 
     commit_changes "$xap_folder"
+
+    delete_temp_branch "$xap_open_folder" "$temp_branch_name"
+    delete_temp_branch "$xap_folder" "$temp_branch_name"
+
+#    mvn_deploy "$xap_open_folder"
+#    mvn_deploy "$xap_folder"
+
 
 }
 
