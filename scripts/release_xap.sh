@@ -93,8 +93,7 @@ function commit_changes {
     echo "commiting changes in folder: $folder, with message: $msg"
     git add -u
     git commit -m "$msg"
-    git tag -d "$TAG_NAME"
-    git tag -a "$TAG_NAME" -m "$msg"
+    git tag -f -a "$TAG_NAME" -m "$msg"
 }
 
 # Clone xap-open and xap.
