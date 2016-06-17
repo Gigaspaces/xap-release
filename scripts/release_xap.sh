@@ -25,9 +25,12 @@ function checkout_branch {
       cd "$folder"
       git reset --hard HEAD
       git checkout -- .
-      git clean -d -f -q -x .
+      git clean -d -x --force --quiet .
       git gc --auto
       git checkout "$BRANCH"
+      git tag -l | xargs git tag -d &> /dev/null   # Delete all local tags since git fetch --tags --prune does not realy prune tags.
+      git fetch --tags --prune --quiet
+      git rebase --no-stat
       return "$?"
     ) 
 }
@@ -88,7 +91,6 @@ function clean_m2 {
 # Call maven install from directory $1
 # In case of none zero exit code exit code stop the release
 function mvn_install {
-    (
        pushd "$1"
        cmd="mvn -Dmaven.repo.local=$M2/repository -DskipTests install"
        eval "$cmd"
@@ -96,18 +98,17 @@ function mvn_install {
        popd
        if [ "$r" -ne 0 ]
        then
-          echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
           times
+          echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
           exit "$r"
        fi
-    )
 }
 
-# Call maven install from directory $1
+# Call maven deploy from directory $1
 # It uses the target deploy:deploy to bypass the build.
 # In case of none zero exit code exit code stop the release
 function mvn_deploy {
-    (
+
        pushd "$1"
        cmd="mvn -Dmaven.repo.local=$M2/repository -DskipTests deploy:deploy"
        eval "$cmd"
@@ -115,11 +116,11 @@ function mvn_deploy {
        popd
        if [ "$r" -ne 0 ]
        then
-          echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
           times
+          echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
           exit "$r"
        fi
-    )
+
 }
 
 # Commit local changes and create a tag in dir $1.
@@ -142,9 +143,32 @@ function delete_temp_branch {
     local temp_branch="$2"
 
     pushd "$folder"
+
     git checkout -q "$TAG_NAME"
     git branch -D "$temp_branch"
-    git push -f origin "$TAG_NAME"
+ 
+   if [ "$OVERRIDE_EXISTING_TAG" != "true" ] 
+    then
+	git push origin "$TAG_NAME"
+    else
+	git push -f origin "$TAG_NAME"
+    fi    
+
+    popd
+}
+
+function exit_if_tag_exists {
+    local folder="$1"
+    
+    pushd "$folder"
+    git show-ref --verify --quiet "refs/tags/$TAG_NAME"
+    local r="$?"
+    if [ "$r" -eq 0 ]
+    then
+        times
+        echo "[ERROR] Tag $TAG_NAME already exists in repository $folder, you can set OVERRIDE_EXISTING_TAG=\"true\" to override this tag"
+        exit "$r"
+    fi
     popd
 }
 
@@ -169,7 +193,14 @@ function release_xap {
 
     clone "$xap_open_url" 
     clone "$xap_url"
-   
+
+    if [ "$OVERRIDE_EXISTING_TAG" != "true" ] 
+    then
+       exit_if_tag_exists "$xap_open_folder" 
+       exit_if_tag_exists "$xap_folder" 
+    fi
+
+
     clean_m2 
 
     create_temp_branch "$temp_branch_name" "$xap_open_folder"
@@ -197,7 +228,9 @@ function release_xap {
 #    mvn_deploy "$xap_folder"
 
     times
+    echo "DONE."
 }
+
 
 release_xap 
 

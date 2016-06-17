@@ -19,13 +19,25 @@ From the `scripts` folder type `release_xap.sh setenv.sh`
 export BRANCH=xap-renaming-m3                     # The name of the source branch (where should we start from)
 export VERSION=12.0.0-m7                          # The version that should be in the release poms.
 export TAG_NAME="barak_$VERSION"                  # Once the maven install pass a tag is created and pushed for this source, this is the name of the tag.
+export OVERRIDE_EXISTING_TAG=true                 # If equal to the string true, $TAG_NAME will be modified if already exists.
 
 export M2=/home/barakbo/tmp/m2                    # The location of the m2 maven, the script will delete some of the folder in this location it is best to use a dedicated folder for this script.
 export WORKSPACE=/home/barakbo/tmp/workspace      # The location on the disk that the script will checkout the sources.
+
 ```
 
 ## Workflow description.
 
-TBD
+1. Clone xap-open and xap, this is done smartly to save time, indeed git *is* the information manager from hell
+2. Clean m2 from xap related directories.
+3. Create temporary local git branch.
+4. Rename poms.
+5. Call maven install.
+6. Commit changes.
+7. Create tag.
+8. Delete the temporary local branch.
+9. Push the tag
+10. Call maven deploy.
+
 
 
