@@ -59,16 +59,19 @@ and run with `./release_xap.sh setenv.sh`
 
 ## Comparing release_xap.sh with maven release plugin
 
-feature | release_xap.sh | maven release plugin
---- | --- | ---
-Standard | :x: | :white_check_mark:
-Well debugged | :x: | :white_check_mark:
-Fast | :white_check_mark: | :x:
-Play well with multiple repositories | :white_check_mark: | :x:
-Clear error messages | :white_check_mark: | :x:
-Debuggable | :white_check_mark: | :x:
-Can be customized | :white_check_mark: | :x:
-Simplicity | :white_check_mark: | :x:
-Resumable | :white_check_mark: | :x:
-Loved by it's comunity | :white_check_mark: | :x: 
+feature | release_xap.sh | maven release plugin | remarks
+--- | --- | --- | ---
+Standard | :x: | :white_check_mark: |
+Well debugged | :x: | :white_check_mark: |
+Can run from console | :white_check_mark: | :white_check_mark: |
+Fast | :white_check_mark: | :x: | ~20 min vs ~2 hour
+Play well with multiple repositories | :white_check_mark: | :x: |
+Fail fast | :white_check_mark: | :x: | when OVERRIDE_EXISTING_TAG is not set to true release_.xap.sh will not start the build if the tag exist in local or remote repository
+Clear error messages | :white_check_mark: | :x: | 
+Can run partually | :white_check_mark: | :x: | from console by commenting lines in the script
+Debuggable | :white_check_mark: | :x: | just add `-x` in the top
+Can be customized | :white_check_mark: | :x: | very easy to add a new envoriment variable and to use its value from the script.
+Simplicity | :white_check_mark: | :x: | script  < 250 lines against > 10000 lines of Jave lines and many external dependencies.
+Loved by it's comunity | :white_check_mark: | :x:  | 
+
 
