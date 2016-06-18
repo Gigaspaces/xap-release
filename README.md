@@ -20,6 +20,7 @@ export BRANCH=xap-renaming-m3                     # The name of the source branc
 export VERSION=12.0.0-m7                          # The version that should be in the release poms.
 export TAG_NAME="barak_$VERSION"                  # Once the maven install pass a tag is created and pushed for this source, this is the name of the tag.
 export OVERRIDE_EXISTING_TAG=true                 # If equal to the string true, $TAG_NAME will be modified if already exists.
+export DEPLOY_ARTIFACTS=true                      # If equal to true deply maven artifacts to s3 (provided that the setting in .m2 is configured)
 
 export M2=/home/barakbo/tmp/m2                    # The location of the m2 maven, the script will delete some of the folder in this location it is best to use a dedicated folder for this script.
 export WORKSPACE=/home/barakbo/tmp/workspace      # The location on the disk that the script will checkout the sources.
@@ -54,4 +55,20 @@ This will enable you to work with github from your machine using the git native 
 
 Next clone this git repo, modify the `setenv.sh` file you can have the `M2` and `WORKSPACE` vars pointing each to an empty folder
 and run with `./release_xap.sh setenv.sh`
+
+
+## Comparing release_xap.sh with maven release plugin
+
+feature | release_xap.sh | maven release plugin
+--- | --- | ---
+Standard | :x: | :white_check_mark:
+Fast | :white_check_mark: | :x:
+Play well with multiple repositories | :white_check_mark: | :x:
+Clear error messages | :white_check_mark: | :x:
+Debuggable | :white_check_mark: | :x:
+Can be customized | :white_check_mark: | :x:
+Simplicity | :white_check_mark: | :x:
+Resumable | :white_check_mark: | :x:
+Well debugged | :x: | :white_check_mark:
+Loved by it's comunity | :white_check_mark: | :x: 
 

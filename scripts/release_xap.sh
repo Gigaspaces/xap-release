@@ -223,9 +223,12 @@ function release_xap {
 
     delete_temp_branch "$xap_open_folder" "$temp_branch_name"
     delete_temp_branch "$xap_folder" "$temp_branch_name"
-
-#    mvn_deploy "$xap_open_folder"
-#    mvn_deploy "$xap_folder"
+    
+    if [ "$DEPLOY_ARTIFACTS" = "true" ]
+    then
+       mvn_deploy "$xap_open_folder"
+       mvn_deploy "$xap_folder"
+    else
 
     times
     echo "DONE."
