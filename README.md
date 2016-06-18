@@ -62,6 +62,7 @@ and run with `./release_xap.sh setenv.sh`
 feature | release_xap.sh | maven release plugin
 --- | --- | ---
 Standard | :x: | :white_check_mark:
+Well debugged | :x: | :white_check_mark:
 Fast | :white_check_mark: | :x:
 Play well with multiple repositories | :white_check_mark: | :x:
 Clear error messages | :white_check_mark: | :x:
@@ -69,6 +70,5 @@ Debuggable | :white_check_mark: | :x:
 Can be customized | :white_check_mark: | :x:
 Simplicity | :white_check_mark: | :x:
 Resumable | :white_check_mark: | :x:
-Well debugged | :x: | :white_check_mark:
 Loved by it's comunity | :white_check_mark: | :x: 
 
