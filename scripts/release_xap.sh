@@ -8,7 +8,7 @@ fi
 source "$1"
 
 
-# Get the folder by git url
+# Get the folder from git url 
 # $1 is a git url of the form git@github.com:Gigaspaces/xap-open.git
 # The function will return a folder in the $WORKSPACE that match this git url (for example $WORKSPACE/xap-open)
 function get_folder {
@@ -22,16 +22,18 @@ function get_folder {
 function checkout_branch {
     local folder="$1"
     (
-      cd "$folder"
-      git reset --hard HEAD
-      git checkout -- .
-      git clean -d -x --force --quiet .
-      git gc --auto
-      git checkout "$BRANCH"
-      git tag -l | xargs git tag -d &> /dev/null   # Delete all local tags since git fetch --tags --prune does not realy prune tags.
-      git fetch --tags --prune --quiet
-      git rebase --no-stat
-      return "$?"
+	cd "$folder"
+	git reset --hard HEAD
+	git checkout -- .
+	git clean -d -x --force --quiet .
+	git gc --auto
+	git checkout "$BRANCH"
+	# Delete all local tags since git fetch --tags --prune does not realy prune tags.
+	git tag -l | xargs git tag -d &> /dev/null   
+        # Fetch all branch and tags from remote, prune tags that was deleted on the remote repository.
+	git fetch --tags --prune --quiet 
+	git rebase --no-stat
+	return "$?"
     ) 
 }
 
@@ -40,7 +42,7 @@ function checkout_branch {
 function clone {
     local url="$1"
     local folder="$(get_folder $1)"
-  
+    
     if [ -d "$folder" ]
     then
         checkout_branch "$folder" "$branch"
@@ -56,8 +58,11 @@ function clone {
 
 # Rename all version of each pom in $1 folder with $VERSION
 function rename_poms {
+    # Find current version from the pom.xml file in $1 folder.
     local version="$(grep -m1 '<version>' $1/pom.xml | sed 's/<version>\(.*\)<\/version>/\1/')"
+    # Since grep return the whole line there are spaces that needed to trim.
     local trimmed_version="$(echo -e "${version}" | tr -d '[[:space:]]')"
+    # Find each pom.xml under $1 and replace every $trimmed_version with $VERSION
     find "$1" -name "pom.xml" -exec sed -i.bak "s/$trimmed_version/$VERSION/" \{\} \;
 }
 
@@ -68,40 +73,45 @@ function create_temp_branch {
     local temp_branch_name="$1"
     local git_folder="$2"
     (
-     cd "$git_folder"
-     git checkout "$BRANCH"
-     git show-ref --verify --quiet "refs/heads/$temp_branch_name"
-     if [ "$?" -eq 0 ]
-     then
-	 git branch -D  "$temp_branch_name"
-     fi
-     git checkout -b "$temp_branch_name"
+	cd "$git_folder"
+	git checkout "$BRANCH"
+	git show-ref --verify --quiet "refs/heads/$temp_branch_name"
+	if [ "$?" -eq 0 ]
+	then
+	    git branch -D  "$temp_branch_name"
+	fi
+	git checkout -b "$temp_branch_name"
     )
 }
 
-
+#
 function clean_m2 {
-    rm -rf $M2/repository/org/xap      
-    rm -rf $M2/repository/org/gigaspaces 
-    rm -rf $M2/repository/com/gigaspaces 
-    rm -rf $M2/repository/org/openspaces 
-    rm -rf $M2/repository/com/gs         
+    if [ "PERFORM_FULL_M2_CLEAN" = "true" ]
+    then
+	rm -rf $M2/repository
+    else
+	rm -rf $M2/repository/org/xap      
+	rm -rf $M2/repository/org/gigaspaces 
+	rm -rf $M2/repository/com/gigaspaces 
+	rm -rf $M2/repository/org/openspaces 
+	rm -rf $M2/repository/com/gs         
+    fi
 }
 
 # Call maven install from directory $1
 # In case of none zero exit code exit code stop the release
 function mvn_install {
-       pushd "$1"
-       cmd="mvn -Dmaven.repo.local=$M2/repository -DskipTests install"
-       eval "$cmd"
-       local r="$?"
-       popd
-       if [ "$r" -ne 0 ]
-       then
-          times
-          echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
-          exit "$r"
-       fi
+    pushd "$1"
+    cmd="mvn -Dmaven.repo.local=$M2/repository -DskipTests install"
+    eval "$cmd"
+    local r="$?"
+    popd
+    if [ "$r" -ne 0 ]
+    then
+        times
+        echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
+        exit "$r"
+    fi
 }
 
 # Call maven deploy from directory $1
@@ -109,17 +119,17 @@ function mvn_install {
 # In case of none zero exit code exit code stop the release
 function mvn_deploy {
 
-       pushd "$1"
-       cmd="mvn -Dmaven.repo.local=$M2/repository -DskipTests deploy:deploy"
-       eval "$cmd"
-       local r="$?"
-       popd
-       if [ "$r" -ne 0 ]
-       then
-          times
-          echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
-          exit "$r"
-       fi
+    pushd "$1"
+    cmd="mvn -Dmaven.repo.local=$M2/repository -DskipTests deploy:deploy"
+    eval "$cmd"
+    local r="$?"
+    popd
+    if [ "$r" -ne 0 ]
+    then
+        times
+        echo "[ERROR] Failed While installing using maven in folder: $1, command is: $cmd, exit code is: $r"
+        exit "$r"
+    fi
 
 }
 
@@ -146,8 +156,8 @@ function delete_temp_branch {
 
     git checkout -q "$TAG_NAME"
     git branch -D "$temp_branch"
- 
-   if [ "$OVERRIDE_EXISTING_TAG" != "true" ] 
+    
+    if [ "$OVERRIDE_EXISTING_TAG" != "true" ] 
     then
 	git push origin "$TAG_NAME"
     else
@@ -196,8 +206,8 @@ function release_xap {
 
     if [ "$OVERRIDE_EXISTING_TAG" != "true" ] 
     then
-       exit_if_tag_exists "$xap_open_folder" 
-       exit_if_tag_exists "$xap_folder" 
+	exit_if_tag_exists "$xap_open_folder" 
+	exit_if_tag_exists "$xap_folder" 
     fi
 
 
@@ -226,12 +236,11 @@ function release_xap {
     
     if [ "$DEPLOY_ARTIFACTS" = "true" ]
     then
-       mvn_deploy "$xap_open_folder"
-       mvn_deploy "$xap_folder"
-    else
-
-    times
-    echo "DONE."
+	mvn_deploy "$xap_open_folder"
+	mvn_deploy "$xap_folder"
+    fi
+	times
+	echo "DONE."
 }
 
 
