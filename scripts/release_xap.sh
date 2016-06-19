@@ -27,11 +27,11 @@ function checkout_branch {
 	git checkout -- .
 	git clean -d -x --force --quiet .
 	git gc --auto
-	git checkout "$BRANCH"
 	# Delete all local tags since git fetch --tags --prune does not realy prune tags.
 	git tag -l | xargs git tag -d &> /dev/null   
         # Fetch all branch and tags from remote, prune tags that was deleted on the remote repository.
 	git fetch --tags --prune --quiet 
+	git checkout "$BRANCH"
 	git rebase --no-stat
 	return "$?"
     ) 
